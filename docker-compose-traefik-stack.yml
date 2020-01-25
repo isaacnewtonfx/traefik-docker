@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  reverse-proxy:
+    # The official v2.0 Traefik docker image
+    image: traefik:v2.0
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker --providers.docker.swarmMode=true
+    ports:
+      # The HTTP port
+      - "91:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "9191:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    networks:
+        - traefik-stack
+    deploy:
+        labels:
+            - traefik.http.services.reverse-proxy.loadbalancer.server.port=91
+            - traefik.docker.network=traefik-stack
+
+        placement:
+            constraints:
+                - node.role == manager
+
+networks:
+   traefik-stack:
+      external: true
